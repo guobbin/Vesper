@@ -218,7 +218,7 @@ class Node():
                 time.sleep(delta)
 
     def handle_get(self, payload):
-        print("getting", payload)
+        print(payload)
         key = payload["key"]
         if key in self.DB:
             payload["value"] = self.DB[key]
@@ -238,8 +238,7 @@ class Node():
             lock.release()
 
     def handle_put(self, payload):
-        print("putting", payload)
-
+        print(payload)
         # lock to only handle one request at a time
         self.lock.acquire()
         self.staged = payload
@@ -277,12 +276,16 @@ class Node():
         print("majority reached, replied to client, sending message to commit")
         return True
 
-    # put staged key-value pair into local database
     def commit(self):
         self.commitIdx += 1
         self.log.append(self.staged)
-        key = self.staged["key"]
-        value = self.staged["value"]
-        self.DB[key] = value
+        if self.staged["op"] == "put":
+            key = self.staged["key"]
+            value = self.staged["value"]
+            self.DB[key] = value
+        else:
+            key = self.staged["key"]
+            if self.DB.get(key):
+                self.DB.pop(key)
         # empty the staged so we can vote accordingly if there is a tie
         self.staged = None

@@ -13,9 +13,16 @@ def redirectToLeader(server_address, message):
                                         timeout=1)
             except Exception as e:
                 return e
-        else:
+        elif type == "put":
             try:
                 response = requests.put(server_address,
+                                        json=message,
+                                        timeout=1)
+            except Exception as e:
+                return e
+        else:
+            try:
+                response = requests.delete(server_address,
                                         json=message,
                                         timeout=1)
             except Exception as e:
@@ -40,7 +47,7 @@ def redirectToLeader(server_address, message):
 # client put request
 def put(addr, key, value):
     server_address = addr + "/request"
-    payload = {'key': key, 'value': value}
+    payload = {'op': 'put', 'key': key, 'value': value}
     message = {"type": "put", "payload": payload}
     # redirecting till we find the leader, in case of request during election
     print(redirectToLeader(server_address, message))
@@ -49,27 +56,52 @@ def put(addr, key, value):
 # client get request
 def get(addr, key):
     server_address = addr + "/request"
-    payload = {'key': key}
+    payload = {'op': 'get', 'key': key}
     message = {"type": "get", "payload": payload}
     # redirecting till we find the leader, in case of request during election
     print(redirectToLeader(server_address, message))
 
 
+def delete(addr, key):
+    server_address = addr + "/request"
+    payload = {'op': 'delete', 'key': key}
+    message = {"type": "delete", "payload": payload}
+    # redirecting till we find the leader, in case of request during election
+    print(redirectToLeader(server_address, message))
+
+
+def printHow():
+    print("PUT usage: python client.py address add 'key' 'value'")
+    print("GET usage: python client.py address get 'key'")
+    print("DELETE usage: python client.py address del 'key'")
+    print("Format: address: http://ip:port")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         # addr, key
         # get
         addr = sys.argv[1]
-        key = sys.argv[2]
-        get(addr, key)
-    elif len(sys.argv) == 4:
+        op = sys.argv[2]
+        key = sys.argv[3]
+        if op == 'get':
+            get(addr, key)
+        elif op == 'del':
+            delete(addr, key)
+        else:
+            printHow()
+            # pass
+    elif len(sys.argv) == 5:
         # addr, key value
         # put
-        addr = sys.argv[1]
-        key = sys.argv[2]
-        val = sys.argv[3]
-        put(addr, key, val)
+        if sys.argv[2] == 'put':
+            addr = sys.argv[1]
+            key = sys.argv[3]
+            val = sys.argv[4]
+            put(addr, key, val)
+        else:
+            printHow()
     else:
-        print("PUT usage: python3 client.py address 'key' 'value'")
-        print("GET usage: python3 client.py address 'key'")
-        print("Format: address: http://ip:port")
+        printHow()
+
+

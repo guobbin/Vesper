@@ -26,13 +26,30 @@ def value_get():
 @app.route("/request", methods=['PUT'])
 def value_put():
     payload = request.json["payload"]
-    reply = {"code": 'fail'}
+    reply = {"code": 'put fail'}
 
     if n.status == LEADER:
         # request handle, reply is a dictionary
         result = n.handle_put(payload)
         if result:
-            reply = {"code": "success"}
+            reply = {"op": "put", "code": "success"}
+    elif n.status == FOLLOWER:
+        # redirect request
+        payload["message"] = n.leader
+        reply["payload"] = payload
+    return jsonify(reply)
+
+
+@app.route("/request", methods=['DELETE'])
+def delete():
+    payload = request.json["payload"]
+    reply = {"code": 'delete fail'}
+
+    if n.status == LEADER:
+        # request handle, reply is a dictionary
+        result = n.handle_put(payload)
+        if result:
+            reply = {"code": "delete success"}
     elif n.status == FOLLOWER:
         # redirect request
         payload["message"] = n.leader
